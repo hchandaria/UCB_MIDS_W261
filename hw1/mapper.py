@@ -5,8 +5,9 @@ count = 0
 WORD_RE = re.compile(r"[\w']+")
 filename = sys.argv[1]
 findwords ={}
+local_findwords = re.split(" ",sys.argv[2].lower())
 vocab_len = len(sys.argv[2:])
-for word in sys.argv[2:]:
+for word in local_findwords:
     findwords[word] = 1
 with open (filename, "r") as myfile:
     for line in myfile.readlines():
@@ -20,6 +21,8 @@ with open (filename, "r") as myfile:
         result = re.findall(WORD_RE,text)
         #build a vocabluary of words 
         vocab ={}
+        for word in local_findwords:
+            vocab[word] = 0
         for key in result:
             if key not in findwords:
                 continue
@@ -30,5 +33,4 @@ with open (filename, "r") as myfile:
         output =content[0]+ "\t" + content[1]+"\t"+str(len(result))+"\t"+str(vocab_len)
         for key, value in vocab.iteritems():
             output += "\t" + key + "\t" + str(value)
-        
         print output
