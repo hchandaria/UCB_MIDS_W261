@@ -4,11 +4,7 @@ import re
 count = 0
 WORD_RE = re.compile(r"[\w']+")
 filename = sys.argv[1]
-findwords ={}
-local_findwords = re.split(" ",sys.argv[2].lower())
-vocab_len = len(sys.argv[2:])
-for word in local_findwords:
-    findwords[word] = 1
+findword = sys.argv[2]
 with open (filename, "r") as myfile:
     for line in myfile.readlines():
         #Tokenize each line
@@ -19,18 +15,11 @@ with open (filename, "r") as myfile:
             continue
         text = content[2] + ' ' + content[3]
         result = re.findall(WORD_RE,text)
-        #build a vocabluary of words 
-        vocab ={}
-        for word in local_findwords:
-            vocab[word] = 0
-        for key in result:
-            if key not in findwords:
-                continue
-            if key in vocab:
-                vocab[key] += 1
-            else:
-                vocab[key] = 1
-        output =content[0]+ "\t" + content[1]+"\t"+str(len(result))+"\t"+str(vocab_len)
-        for key, value in vocab.iteritems():
-            output += "\t" + key + "\t" + str(value)
-        print output
+        #Now find index of each matching instance of the word for that email
+        #lower is used to do case insensitive search
+        indices = [i for i,x in enumerate(result) if x.lower() == findword.lower()]
+        # Correct approach is to increment the count based on the number of occurences found.
+        # but shell script example provided only increments once per line matched.
+        count += len(indices)
+output = findword+"\t"+str(count)
+print output        
