@@ -1,18 +1,15 @@
 #!/usr/bin/python
 
-#hw3.5b 
+#HW3.4 In this question, we will emit a counter for everytime the mapper is called is called. 
+# In the mapper code we will emit the frequency first followed by the product pair
+# we are also going to tell hadoop to sort the key as numeric and in reverse order
 
 import sys
 import re
 
-sys.stderr.write("reporter:counter:HW3_5b,num_mappers,1\n")
+sys.stderr.write("reporter:counter:HW3_4b,num_mappers,1\n")
 # input comes from STDIN (standard input)
 for line in sys.stdin:
-    # remove leading and trailing whitespace and tokenize
-    token  =  line.strip().split("\t")
-    for i in range (0,len(uniq_tokens)-1):
-        key = uniq_tokens[i]
-        value = ""
-        for j in range(i+1, len(uniq_tokens)):
-            value += uniq_tokens[j] + "\t1\t"
-        print '%s\t%s' %(key,value)
+    #remove leading and trailing spaces 
+    row = re.split(r'\t',line.strip())
+    print '%s\t%s\t%s' %(row[2],row[0],row[1])
