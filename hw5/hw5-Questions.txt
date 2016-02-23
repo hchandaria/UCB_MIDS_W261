@@ -47,17 +47,26 @@ Please report the number of rows resulting from:
 --
 
 HW 5.3  EDA of Google n-grams dataset
-For the Google n-grams dataset unit test and regression test your code using the 
-first 10 lines of the following file:
+A large subset of the Google n-grams dataset
 
-googlebooks-eng-all-5gram-20090715-0-filtered.txt
+https://aws.amazon.com/datasets/google-books-ngrams/
 
-Finally show your results on the Google n-grams dataset. 
+which we have placed in a bucket/folder on Dropbox on s3:
 
+   https://www.dropbox.com/sh/tmqpc4o0xswhkvz/AACUifrl6wrMrlK6a3X3lZ9Ea?dl=0 
+
+   s3://filtered-5grams/
 
 In particular, this bucket contains (~200) files (10Meg each) in the format:
 
 	(ngram) \t (count) \t (pages_count) \t (books_count)
+
+For HW 5.3-5.5, for the Google n-grams dataset unit test and regression test your code using the 
+first 10 lines of the following file:
+
+googlebooks-eng-all-5gram-20090715-0-filtered.txt
+
+Once you are happy with your test results proceed to generating  your results on the Google n-grams dataset. 
 
 Do some EDA on this dataset using mrjob, e.g., 
 
@@ -65,6 +74,8 @@ Do some EDA on this dataset using mrjob, e.g.,
 - Top 10 most frequent words (please use the count information), i.e., unigrams
 - 20 Most/Least densely appearing words (count/pages_count) sorted in decreasing order of relative frequency 
 - Distribution of 5-gram sizes (character length).  E.g., count (using the count field) up how many times a 5-gram of 50 characters shows up. Plot the data graphically using a histogram.
+
+
 
 HW 5.3.1 OPTIONAL Question:
 - Plot the log-log plot of the frequency distributuion of unigrams. Does it follow power law distribution?
@@ -88,7 +99,7 @@ DocC {M:5, N:20, Z:5}
 
 ### 2: A large subset of the Google n-grams dataset as was described above
 
-For each HW 5.4 -5.5 Please unit test and system test your code with respect 
+For each HW 5.4 -5.5.1 Please unit test and system test your code with respect 
 to SYSTEMS TEST DATASET and show the results. 
 Please compute the expected answer by hand and show your hand calculations for the 
 SYSTEMS TEST DATASET. Then show the results you get with you system.
@@ -98,8 +109,9 @@ for detecting synonyms, using the Google 5-grams dataset. To accomplish
 this you must script two main tasks using MRJob:
 
 (1) Build stripes for the most frequent 10,000 words using cooccurence informationa based on
-the words ranked from 1001,-10,000 as a basis/vocabulary (drop stopword-like terms),
+the words ranked from 9001,-10,000 as a basis/vocabulary (drop stopword-like terms),
 and output to a file in your bucket on s3 (bigram analysis, though the words are non-contiguous).
+
 
 (2) Using two (symmetric) comparison methods of your choice 
 (e.g., correlations, distances, similarities), pairwise compare 
@@ -142,10 +154,14 @@ since your choice of association will be symmetric.
 
 Please use the inverted index (discussed in live session #5) based pattern to compute the pairwise (term-by-term) similarity matrix. 
 
+Please report the size of the cluster used and the amount of time it takes to run for the index construction task and for the synonym calculation task. How many pairs need to be processed (HINT: use the posting list length to calculate directly)? Report your  Cluster configuration!
+
+
+
 HW 5.5 Evaluation of synonyms that your discovered
-In this part of the assignment you will evaluate the success of you synonym detector.
+In this part of the assignment you will evaluate the success of you synonym detector (developed in response to HW5.4).
 Take the top 1,000 closest/most similar/correlative pairs of words as determined
-by your measure in (2), and use the synonyms function in the accompanying
+by your measure in HW5.4, and use the synonyms function in the accompanying
 python code:
 
 nltk_synonyms.py
@@ -162,9 +178,21 @@ then consider this pair a 'hit', and then report the precision, recall, and F1 m
 your detector across your 1,000 best guesses. Report the macro averages of these measures.
 
 
+HW5.6 Optional
+
+Repeat HW5 using vocabulary words ranked from 8001,-10,000;  7001,-10,000; 6001,-10,000; 5001,-10,000; 3001,-10,000; and 1001,-10,000;
+Dont forget to report you Cluster configuration.
+
+Generate the following graphs:
+-- vocabulary size (X-Axis) versus CPU time for indexing
+-- vocabulary size (X-Axis) versus number of pairs processed
+-- vocabulary size (X-Axis) versus F1 measure, Precision, Recall
+
+
+
 --
 
-HW 5.5.1 (optional)
+HW 5.7 (optional)
 There is also a corpus of stopwords, that is, high-frequency words like "the", "to" and "also" that we sometimes want to filter out of a document before further processing. Stopwords usually have little lexical content, and their presence in a text fails to distinguish it from other texts. Python's nltk comes with a prebuilt list of stopwords (see below). Using this stopword list filter out these tokens from your analysis and rerun the experiments in 5.5 and disucuss the results of using a stopword list and without using a stopword list.
 
 >> from nltk.corpus import stopwords
