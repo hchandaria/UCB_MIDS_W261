@@ -13,13 +13,14 @@ WORD_RE = re.compile(r"[\w']+")
 # @terms = terms present in the incoming document
 # @alpha = prior probability for cluster k
 # @qmk_local = vocab probability for cluster k
+#@epsilon = smoothing
 # return partially calculated  rnk (numerator)
-def bernoulli(terms, alpha,qmk_local,n,k,epsilon):
+def bernoulli(terms, alpha,qmk_local,epsilon):
     lprob = 0.0 #log probability
-    for key,value in qmk_local.iteritems():
-        if key not in terms: #if we have never seen the term in the document 
+    for i in range(len(qmk_local)):
+        if np.isnan(terms[i]) : #if we have never seen the term in the document 
             continue
-        lprob += log(terms[key]*(value + epsilon) + ((1-terms[key] )*(1-value + epsilon)))
+        lprob += log(terms[i]*(qmk_local[i] + epsilon) + ((1-terms[i] )*(1-qmk_local[i] + epsilon)))
     lprob =  Decimal(log(alpha)+lprob).exp()
     return lprob
         
@@ -31,32 +32,26 @@ class MrBMixEm(MRJob):
     def __init__(self, *args, **kwargs):
         super(MrBMixEm, self).__init__(*args, **kwargs)
         
-        fullPath = self.options.pathName + 'intermediateResults_BMM.txt'
+        fullPath = self.options.pathName + 'intermediateResults_BMM_tweet.txt'
         fileIn = open(fullPath)
         inputJson = fileIn.read()
         fileIn.close()
         inputList = json.loads(inputJson)
         temp = inputList[0]        
         self.alpha = array(temp)           #prior class probabilities
-        temp = inputList[1] #entire vocab         
-        
-        self.qmk = {int(k):v for k,v in temp.items()}
-        
-        self.vocab = []
-        self.new_qmk = {}
-        for i in range(self.options.k):
-            self.new_qmk[i]={}
-        for key,value in self.qmk.iteritems():
-            for term,val in value.iteritems():
-                self.new_qmk[key][term]=0
-                if(val != 0):
-                    self.vocab.append(term)
+        self.qmk = inputList[1] #entire vocab   
+        self.vocab = [] # for the first round determing which indexes have data
+        self.new_qmk = zeros_like(self.qmk)
+        for i in range(len(self.qmk)) :
+            for j in range(len(self.qmk[i])):
+                if(self.qmk[i][j] != 0):
+                    self.vocab.append(j)
                 
         self.vocab =  set(self.vocab)
             
         self.new_alphas = zeros_like(self.alpha)        #partial weighted sum of weights
         
-        self.numMappers = 1             #number of mappers
+#         self.numMappers = 1             #number of mappers
         self.count = 0                  #passes through mapper
 
         
@@ -64,48 +59,49 @@ class MrBMixEm(MRJob):
         super(MrBMixEm, self).configure_options()
 
         self.add_passthrough_option(
-            '--k', dest='k', default=2, type='int',
+            '--k', dest='k', default=4, type='int',
             help='k: number of densities in mixture')
         self.add_passthrough_option(
             '--pathName', dest='pathName', default="", type='str',
             help='pathName: pathname where intermediateResults.txt is stored')
         
-    def mapper(self, key, val):
+    def mapper(self, key, line):
         smoothing = 0.0001
         #accumulate partial sums for each mapper
-        val = re.findall(WORD_RE,val)
-        stripe ={k: 0 for k in self.vocab} 
+        val = line.strip().split(',')[3:]
+        stripe=zeros([len(val)])
         
-    
-        for word in val:
-            if word not in stripe:
+        for i in range(len(val)):
+            if i not in self.vocab:
                 continue
-            stripe[word]=1
+            if val[i] != '0' :
+                stripe[i] = 1.0
+            else : stripe[i]= None
+    
         rnk=zeros_like(self.alpha)
         
         for i in range(0,self.options.k):
-            rnk[i] = bernoulli(stripe,self.alpha[i],self.qmk[i],self.count,i,smoothing)
-
+            rnk[i] = bernoulli(stripe,self.alpha[i],self.qmk[i],smoothing)
+    
         rnk = rnk/sum(rnk)
    
         #increment counts 
         self.count += 1
         
         #accumulate new alpha 
-        self.new_alphas = self.new_alphas + (rnk + smoothing)
-        
-        
-        print "Doc Probability: ",self.count,[round(i,4) for i in rnk]
+        self.new_alphas = self.new_alphas + (rnk)# + smoothing)
         
         for i in range(self.options.k):
-            for key in val:
-                self.new_qmk[i][key] +=  (rnk[i] + smoothing)
+            for j in range(len(val)):
+                if val[j] == '0':
+                    continue
+                self.new_qmk[i][j] +=  (rnk[i])# + smoothing)
 #         dummy yield - real output passes to mapper_final in self
 
         
     def mapper_final(self):
         
-        out = [self.count, (self.new_alphas).tolist(),self.new_qmk ]
+        out = [self.count, (self.new_alphas).tolist(),self.new_qmk.tolist() ]
         jOut = json.dumps(out)
         yield 1,jOut
     
@@ -122,33 +118,29 @@ class MrBMixEm(MRJob):
                 #totCount, totPhi, totMeans, and totCov are all arrays
                 totCount = temp[0]
                 totalpha = array(temp[1])
-                totqmk = {int(k):v for k,v in temp[2].items()}            
+                totqmk = array(temp[2])         
                 first = False
             else:
                 temp = json.loads(val)
                 #cumulative sum of four arrays
                 totCount = totCount + temp[0]
                 totalpha = totalpha + array(temp[1])
-                local_qmk = {int(k):v for k,v in temp[2].items()}
-                for key,value in totqmk.iteritems():
-                    for term,count in value.iteritems():
-                        totqmk[key][term] = count + local_qmk[key][term]
+                totqmk  = totqmk + array(temp[2])
                 
         #finish calculation of new probability parameters. array divided by array
         newAlpha = totalpha/totCount
-        print array(newAlpha).tolist()
+#         print array(newAlpha).tolist()
         #initialize these to something handy to get the right size arrays
-        newqmk = {}
+        newqmk = zeros_like(totqmk)
         for i in range(self.options.k):
-            newqmk[i]={}
-            for key,value in totqmk[i].iteritems():
-                newqmk[i][key] = value/totalpha[i]
+            for j in range(len(totqmk[i])):
+                newqmk[i][j] = totqmk[i][j]/totalpha[i]
             
-        outputList = [newAlpha.tolist(),newqmk]
+        outputList = [newAlpha.tolist(),newqmk.tolist()]
         jsonOut = json.dumps(outputList)
         
         #write new parameters to file
-        fullPath = self.options.pathName + 'intermediateResults_BMM.txt'
+        fullPath = self.options.pathName + 'intermediateResults_BMM_tweet.txt'
         fileOut = open(fullPath,'w')
         fileOut.write(jsonOut)
         fileOut.close()

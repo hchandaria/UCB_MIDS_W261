@@ -16,7 +16,7 @@ class InnerJoin(MRJob):
         
     
     def mapper(self, line_no, line):
-        cell = line.strip().split(',')
+        cell = line.strip().split('\t')
         url = self.left.get(cell[0],'NA')
         if url != 'NA':
             yield cell[0], (cell[1],self.left.get(cell[0],'NA'))

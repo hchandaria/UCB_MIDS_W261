@@ -10,7 +10,12 @@ class MRJob_GD_LR(MRJob):
         return [MRStep(mapper_init=self.read_weights,
                        mapper=self.partial_gradient,
                        mapper_final=self.partial_gradient_emit,
-                       reducer=self.gradient_accumulater)] 
+                       reducer=self.gradient_accumulater,
+                       jobconf={
+                        "mapred.map.tasks":4,
+                        "mapred.reduce.tasks":1
+                        }
+                      )] 
     
     def read_weights(self):
         # Read initial_seed file
