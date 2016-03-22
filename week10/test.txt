@@ -1,0 +1,4 @@
+When people write a new textbook, they usually start by reading a stack of old textbooks. 
+As a result, most books contain the same material in pretty much the same order.
+I did not do that. 
+In fact, I used almost no printed material while I was writing this book, for several reasons:
