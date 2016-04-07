@@ -1192,8 +1192,8 @@
       "progressUpdateIntervalMs": 500
     },
     {
-      "text": "%pyspark\ndef SVMRegGD(data, wInitial\u003dNone, learningRate\u003d0.05, iterations\u003d50, regParam\u003d0.01, regType\u003dNone,convergenceTol\u003d0.0001):\n    featureLen \u003d len(data.take(1)[0].features)+1\n    n \u003d data.count()\n    if wInitial is None:\n        w \u003d np.random.normal(size\u003dfeatureLen) # w should be broadcasted if it is large\n    else:\n        w \u003d wInitial\n\n    print \u0027\\n Parameters for SVM Classification\u0027\n    print \u0027\u003d\u0027*100\n    print \u0027\\n Learning Rate: {0}\u0027.format(learningRate)\n    print \u0027\\n Regularization Paramter: {0}\u0027.format(regParam)\n    print \u0027\\n Regularization Type : {0}\u0027.format(regType)\n    print \u0027\\n Convergence Tolerance : {0}\u0027.format(convergenceTol)\n    print \u0027\u003d\u0027*100\n\n        \n    for i in range(iterations):\n        wBroadcast \u003d sc.broadcast(w)\n        #determine suport vectors based on the formula\n        sv \u003d data.filter(lambda p: p.label * np.dot(wBroadcast.value,np.append(p.features,1))\u003c1)\n        \n        if sv.isEmpty():\n            break # algorithm has converged \n        \n        #Now determine the gradient \n        gradient \u003d -1* sv.map(lambda p: p.label * np.append(p.features,1) * np.reciprocal(np.sqrt(np.sum(np.square(p.features)))) ).reduce(lambda a,b:a+b) \n       \n        if regType \u003d\u003d \"Ridge\":\n            wReg \u003d wBroadcast.value*1\n            wReg[-1] \u003d 0 #last value of weight vector is bias term, ignored in regularization\n       \n        elif regType \u003d\u003d \"Lasso\":\n            wReg \u003d wBroadcast.value * 1\n            wReg[-1] \u003d 0 #last value of weight vector is bias term, ignored in regularization\n            wReg \u003d (wReg\u003e0).astype(int) * 2-1\n       \n        else:\n            wReg \u003d np.zeros(wBroadcast.value.shape[0])\n            \n        gradient \u003d gradient + regParam * wReg  #gradient:  GD of Sqaured Error+ GD of regularized term \n        \n        wDelta \u003d learningRate * gradient/n\n        \n        if sum(abs(wDelta)) \u003c\u003d convergenceTol*sum(abs(wBroadcast.value)):\n            print \"\\nAlgorithm converges after {0} iterations\".format(i)\n            print \"\\n Number of element in support vector: {0}\".format(sv.count())\n            break;\n        w \u003d wBroadcast.value - wDelta\n    return w",
-      "dateUpdated": "Apr 6, 2016 9:47:25 PM",
+      "text": "%pyspark\ndef SVMRegGD(data, wInitial\u003dNone, learningRate\u003d0.05, iterations\u003d50, regParam\u003d0.01, regType\u003dNone,convergenceTol\u003d0.001):\n    featureLen \u003d len(data.take(1)[0].features)+1\n    n \u003d data.count()\n    if wInitial is None:\n        w \u003d np.random.normal(size\u003dfeatureLen) # w should be broadcasted if it is large\n    else:\n        w \u003d wInitial\n\n    print \u0027\\n Parameters for SVM Classification\u0027\n    print \u0027\u003d\u0027*100\n    print \u0027\\n Learning Rate: {0}\u0027.format(learningRate)\n    print \u0027\\n Regularization Paramter: {0}\u0027.format(regParam)\n    print \u0027\\n Regularization Type : {0}\u0027.format(regType)\n    print \u0027\\n Convergence Tolerance : {0}\u0027.format(convergenceTol)\n    print \u0027\u003d\u0027*100\n\n        \n    for i in range(iterations):\n        wBroadcast \u003d sc.broadcast(w)\n        #determine suport vectors based on the formula\n        sv \u003d data.filter(lambda p: p.label * np.dot(wBroadcast.value,np.append(p.features,1))\u003c1)\n        \n        if sv.isEmpty():\n            break # algorithm has converged \n        \n        #Now determine the gradient \n        gradient \u003d -1* sv.map(lambda p: p.label * np.append(p.features,1) * np.reciprocal(np.sqrt(np.sum(np.square(p.features)))) ).reduce(lambda a,b:a+b) \n       \n        if regType \u003d\u003d \"Ridge\":\n            wReg \u003d wBroadcast.value*1\n            wReg[-1] \u003d 0 #last value of weight vector is bias term, ignored in regularization\n       \n        elif regType \u003d\u003d \"Lasso\":\n            wReg \u003d wBroadcast.value * 1\n            wReg[-1] \u003d 0 #last value of weight vector is bias term, ignored in regularization\n            wReg \u003d (wReg\u003e0).astype(int) * 2-1\n       \n        else:\n            wReg \u003d np.zeros(wBroadcast.value.shape[0])\n            \n        gradient \u003d gradient + regParam * wReg  #gradient:  GD of Sqaured Error+ GD of regularized term \n        \n        wDelta \u003d learningRate * gradient/n\n        \n        if sum(abs(wDelta)) \u003c\u003d convergenceTol*sum(abs(wBroadcast.value)):\n            print \"\\nAlgorithm converges after {0} iterations\".format(i)\n            print \"\\n Number of element in support vector: {0}\".format(sv.count())\n            break;\n        w \u003d wBroadcast.value - wDelta\n    return w",
+      "dateUpdated": "Apr 6, 2016 10:08:30 PM",
       "config": {
         "colWidth": 12.0,
         "graph": {
@@ -1221,14 +1221,14 @@
         "msg": ""
       },
       "dateCreated": "Apr 3, 2016 12:22:23 PM",
-      "dateStarted": "Apr 6, 2016 9:47:25 PM",
-      "dateFinished": "Apr 6, 2016 9:47:26 PM",
+      "dateStarted": "Apr 6, 2016 10:08:30 PM",
+      "dateFinished": "Apr 6, 2016 10:08:31 PM",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
     {
       "text": "%pyspark\nnp.random.seed(400)\nw \u003d SVMRegGD(trainData, iterations\u003d2000, regType\u003d\u0027Ridge\u0027)\nprint \u0027\\nWeights for the model:{0}\u0027.format(w)",
-      "dateUpdated": "Apr 6, 2016 9:47:29 PM",
+      "dateUpdated": "Apr 6, 2016 10:08:34 PM",
       "config": {
         "colWidth": 12.0,
         "graph": {
@@ -1252,17 +1252,17 @@
       "result": {
         "code": "SUCCESS",
         "type": "TEXT",
-        "msg": "\n Parameters for SVM Classification\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n\n Learning Rate: 0.05\n\n Regularization Paramter: 0.01\n\n Regularization Type : Ridge\n\n Convergence Tolerance : 0.0001\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n\nAlgorithm converges after 598 iterations\n\n Number of element in support vector: 50\n\nWeights for the model:[-0.73597012  0.24262694  1.80761594]\n"
+        "msg": "\n Parameters for SVM Classification\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n\n Learning Rate: 0.05\n\n Regularization Paramter: 0.01\n\n Regularization Type : Ridge\n\n Convergence Tolerance : 0.001\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n\nAlgorithm converges after 308 iterations\n\n Number of element in support vector: 52\n\nWeights for the model:[-0.86433388  0.39803966  1.63374384]\n"
       },
       "dateCreated": "Apr 3, 2016 1:48:31 PM",
-      "dateStarted": "Apr 6, 2016 9:47:29 PM",
-      "dateFinished": "Apr 6, 2016 9:48:24 PM",
+      "dateStarted": "Apr 6, 2016 10:08:34 PM",
+      "dateFinished": "Apr 6, 2016 10:09:02 PM",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
     {
       "text": "%pyspark \n#calculating accuracy on test set \n\n\nmodel_prediction \u003d testData.map(lambda p: (p.label, np.dot(w,np.append(p.features,1))))\npredicted \u003d model_prediction.map(lambda (v,p): (v,1.0 if p\u003e1 else 0.0 ))\ntest_accuracy \u003d predicted.filter(lambda (v, p): v \u003d\u003d p).count() / float(testData.count())\nprint \u0027Accuracy on Test Data: {0}\u0027.format(test_accuracy)\nprint \u0027Test Error: {0}\u0027.format(1-test_accuracy)\n\n",
-      "dateUpdated": "Apr 6, 2016 9:49:58 PM",
+      "dateUpdated": "Apr 6, 2016 10:09:09 PM",
       "config": {
         "colWidth": 12.0,
         "graph": {
@@ -1286,17 +1286,17 @@
       "result": {
         "code": "SUCCESS",
         "type": "TEXT",
-        "msg": "Accuracy on Test Data: 0.53\nTest Error: 0.47\n"
+        "msg": "Accuracy on Test Data: 0.71\nTest Error: 0.29\n"
       },
       "dateCreated": "Apr 3, 2016 1:48:31 PM",
-      "dateStarted": "Apr 6, 2016 9:49:58 PM",
-      "dateFinished": "Apr 6, 2016 9:49:59 PM",
+      "dateStarted": "Apr 6, 2016 10:09:09 PM",
+      "dateFinished": "Apr 6, 2016 10:09:09 PM",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
     {
-      "text": "",
-      "dateUpdated": "Apr 6, 2016 9:52:53 PM",
+      "text": "%pyspark\n",
+      "dateUpdated": "Apr 6, 2016 10:08:26 PM",
       "config": {
         "colWidth": 12.0,
         "graph": {
@@ -1319,11 +1319,12 @@
       "id": "20160403-134831_60368696",
       "result": {
         "code": "SUCCESS",
-        "type": "TEXT"
+        "type": "TEXT",
+        "msg": "Misclassification error: 0.0\n"
       },
       "dateCreated": "Apr 3, 2016 1:48:31 PM",
-      "dateStarted": "Apr 6, 2016 9:52:53 PM",
-      "dateFinished": "Apr 6, 2016 9:52:53 PM",
+      "dateStarted": "Apr 6, 2016 10:08:03 PM",
+      "dateFinished": "Apr 6, 2016 10:08:03 PM",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
